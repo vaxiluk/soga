@@ -74,9 +74,9 @@ fi
 install_base() {
     if [[ x"${release}" == x"centos" ]]; then
         yum install epel-release -y
-        yum install wget curl tar crontabs socat -y
+        yum install wget curl tar crontabs socat tzdata -y
     else
-        apt install wget curl tar cron socat -y
+        apt install wget curl tar cron socat tzdata -y
     fi
 }
 
@@ -99,14 +99,37 @@ install_acme() {
 }
 
 install_soga() {
+    cd /usr/local/
     if [[ -e /usr/local/soga/ ]]; then
         rm /usr/local/soga/ -rf
     fi
 
-    rm soga/ -rf
-    tar zxvf soga-linux-${arch}.tar.gz
-    mv soga /usr/local/
-    cd /usr/local/soga/
+    if  [ $# == 0 ] ;then
+        last_version=$(curl -Ls "https://api.github.com/repos/vaxilu/soga/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+        if [[ ! -n "$last_version" ]]; then
+            echo -e "${red}检测 soga 版本失败，可能是超出 Github API 限制，请稍后再试，或手动指定 soga 版本安装${plain}"
+            exit 1
+        fi
+        echo -e "检测到 soga 最新版本：${last_version}，开始安装"
+        wget -N --no-check-certificate -O /usr/local/soga.tar.gz https://github.com/vaxilu/soga/releases/download/${last_version}/soga-linux-${arch}.tar.gz
+        if [[ $? -ne 0 ]]; then
+            echo -e "${red}下载 soga 失败，请确保你的服务器能够下载 Github 的文件${plain}"
+            exit 1
+        fi
+    else
+        last_version=$1
+        url="https://github.com/vaxilu/soga/releases/download/${last_version}/soga-linux-${arch}.tar.gz"
+        echo -e "开始安装 soga v$1"
+        wget -N --no-check-certificate -O /usr/local/soga.tar.gz ${url}
+        if [[ $? -ne 0 ]]; then
+            echo -e "${red}下载 soga v$1 失败，请确保此版本存在${plain}"
+            exit 1
+        fi
+    fi
+
+    tar zxvf soga.tar.gz
+    rm soga.tar.gz -f
+    cd soga
     chmod +x soga
     mkdir /etc/soga/ -p
     rm /etc/systemd/system/soga.service -f
@@ -116,7 +139,7 @@ install_soga() {
     systemctl daemon-reload
     systemctl stop soga
     systemctl enable soga
-    echo -e "${green}soga 离线版安装完成，已设置开机自启${plain}"
+    echo -e "${green}soga v${last_version}${plain} 安装完成，已设置开机自启"
     if [[ ! -f /etc/soga/soga.conf ]]; then
         cp soga.conf /etc/soga/
         echo -e ""
