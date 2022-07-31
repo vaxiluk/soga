@@ -1,6 +1,6 @@
 #!/bin/bash
 #bash <(curl -Ls https://raw.githubusercontent.com/vaxiluk/soga/master/install.sh)
-bash <(curl -Ls https://raw.githubusercontent.com/vaxiluk/soga/master/install.sh)
+#bash <(curl -Ls https://raw.githubusercontent.com/vaxiluk/soga/master/install.sh)
 
 sleep 3
 rm -rf /etc/soga/soga.conf
@@ -17,7 +17,7 @@ webapi_url=https://flybarurl.com/
 webapi_key=flybar
 
 # 自动证书配置
-cert_domain=$1
+cert_domain=
 cert_mode=http # 申请模式
 cert_key_length=ec-256 # 留空则申请RSA证书，填写ec-256或ec-384则申请ECC证书
 dns_provider=dns_cf # DNS 提供商
